@@ -1,13 +1,14 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from google.cloud import dialogflow_v2 as dialogflow
 import os
+from create_intent import create_intent
 from dotenv import load_dotenv
 load_dotenv()
 
 BOT_TOKEN = os.environ['BOT_TOKEN']
 
 credential_path = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
-project_id = "speech001-t9mm"
+project_id = os.environ['PROJECT_ID']
 language_code = 'ru'
 
 session_client = dialogflow.SessionsClient()
@@ -52,4 +53,4 @@ def main():
     updater.idle()
 
 if __name__ == "__main__":
-    main()
+    create_intent(project_id)
