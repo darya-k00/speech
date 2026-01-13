@@ -1,28 +1,53 @@
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+from google.cloud import dialogflow_v2 as dialogflow
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
-BOT_TOKEN = "8432200634:AAFG9nLLWR5UD_rNV3F0BccmLwuPS4gR8rc"
+BOT_TOKEN = os.environ['BOT_TOKEN']
+
+credential_path = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+project_id = "speech001-t9mm"
+language_code = 'ru'
+
+session_client = dialogflow.SessionsClient()
+
+def detect_intent_texts(project_id, session_id, texts, language_code):
+    session = session_client.session_path(project_id, session_id)
+    text_input = dialogflow.TextInput(text=texts, language_code=language_code)
+    query_input = dialogflow.QueryInput(text=text_input)
+    response = session_client.detect_intent(request={'session': session, 'query_input': query_input})
+    return response.query_result.fulfillment_text
 
 def start(update, context):
-    update.message.reply_text("Привет! Я эхобот. Буду повторять все за тобой)")
+    update.message.reply_text("Привет! Я бот, созданный при поддержке DialogFlow)")
 
 def help_command(update, context):
     update.message.reply_text(
-        "Просто напиши любое сообщение, и я его повторю!\n"
+        "Просто напиши любое сообщение, и я его отправлю в Dialogflow!\n"
         "Команды:\n"
-        "/start - начать общение\n"
-        "/help - показать эту справку"
+        "/start - начать\n"
+        "/help - помощь"
     )
 
-def echo(update, context):
+def handle_message(update, context):
     user_message = update.message.text
-    update.message.reply_text(f"Ты сказал: {user_message}")
+    session_id = str(update.message.chat_id) 
+    try:
+        reply = detect_intent_texts(project_id, session_id, user_message, language_code)
+        update.message.reply_text(reply)
+    except Exception as e:
+        update.message.reply_text("Произошла ошибка при обработке сообщения.")
+        print(f"Error: {e}")
 
 def main():
     updater = Updater(BOT_TOKEN)
     dispatcher = updater.dispatcher
+    
     dispatcher.add_handler(CommandHandler("start", start))
     dispatcher.add_handler(CommandHandler("help", help_command))
-    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, echo))
+    dispatcher.add_handler(MessageHandler(Filters.text & ~Filters.command, handle_message))
+    
     updater.start_polling()
     updater.idle()
 
