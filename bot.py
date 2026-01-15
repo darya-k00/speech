@@ -1,7 +1,7 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from google.cloud import dialogflow_v2 as dialogflow
 import os
-from create_intent import create_intent
+from create_intent import create_intent, detect_intent_texts
 from dotenv import load_dotenv
 load_dotenv()
 
@@ -12,13 +12,6 @@ project_id = os.environ['PROJECT_ID']
 language_code = 'ru'
 
 session_client = dialogflow.SessionsClient()
-
-def detect_intent_texts(project_id, session_id, texts, language_code):
-    session = session_client.session_path(project_id, session_id)
-    text_input = dialogflow.TextInput(text=texts, language_code=language_code)
-    query_input = dialogflow.QueryInput(text=text_input)
-    response = session_client.detect_intent(request={'session': session, 'query_input': query_input})
-    return response.query_result.fulfillment_text
 
 def start(update, context):
     update.message.reply_text("Привет! Я бот, созданный при поддержке DialogFlow)")
@@ -32,14 +25,14 @@ def help_command(update, context):
     )
 
 def handle_message(update, context):
-    user_message = update.message.text
-    session_id = str(update.message.chat_id) 
-    try:
-        reply = detect_intent_texts(project_id, session_id, user_message, language_code)
-        update.message.reply_text(reply)
-    except Exception as e:
-        update.message.reply_text("Произошла ошибка при обработке сообщения.")
-        print(f"Error: {e}")
+    dialogflow_response = detect_intent_texts(
+        project_id=os.getenv('PROJECT_ID'),
+        session_id=update.effective_chat.id,
+        user_message=update.message.text,
+        language_code='ru'
+        )
+    text = dialogflow_response.query_result.fulfillment_text
+    update.message.reply_text(text=text)
 
 def main():
     updater = Updater(BOT_TOKEN)
@@ -53,4 +46,4 @@ def main():
     updater.idle()
 
 if __name__ == "__main__":
-    create_intent(project_id)
+    main()

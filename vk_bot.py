@@ -1,6 +1,6 @@
 import os
 import random
-from create_intent import create_intent
+from create_intent import detect_intent_texts
 import vk_api as vk
 from vk_api.longpoll import VkLongPoll, VkEventType
 from dotenv import load_dotenv
@@ -13,34 +13,22 @@ project_id = os.environ['PROJECT_ID']
 GOOGLE_APPLICATION_CREDENTIALS = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
 LANGUAGE_CODE = 'ru'
 
-session_client = dialogflow.SessionsClient()
-
-def detect_intent_texts(project_id, session_id, text, language_code):
-    session = session_client.session_path(project_id, session_id)
-    text_input = dialogflow.TextInput(text=text, language_code=language_code)
-    query_input = dialogflow.QueryInput(text=text_input)
-    response = session_client.detect_intent(request={'session': session, 'query_input': query_input})
-    return response.query_result.fulfillment_text
-
 def handle_message(event, vk_api):
-    user_id = event.user_id
-    user_message = event.text
-    session_id = str(user_id)
-    try:
-        reply = detect_intent_texts(project_id, session_id, user_message, LANGUAGE_CODE)
-        vk_api.messages.send(
-            user_id=user_id,
-            message=reply,
-            random_id=random.randint(1, 100000)
+    dialogflow_response = detect_intent_texts(
+        project_id=os.getenv('project_id'),
+        session_id=event.user_id,
+        user_message=event.text,
+        language_code='ru'
         )
-    except Exception as e:
-        vk_api.messages.send(
-            user_id=user_id,
-            message="Произошла ошибка при обработке сообщения.",
-            random_id=random.randint(1, 100000)
-        )
-        print(f"Error: {e}")
 
+    is_response_fallback = dialogflow_response.query_result.intent.is_fallback
+    if not is_response_fallback:
+        text = dialogflow_response.query_result.fulfillment_text
+        vk_api.messages.send(
+            user_id=event.user_id,
+            message=text,
+            random_id=random.randint(1, 1000)
+        )
 def main():
     load_dotenv()
     vk_session = vk.VkApi(token=API_KEY_VK_BOT)
