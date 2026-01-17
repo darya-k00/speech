@@ -4,6 +4,7 @@ from google.cloud import dialogflow
 
 BASE_DIR = os.path.dirname(__file__)
 
+project_id = os.environ['PROJECT_ID']
 
 def get_intents():
     path_to_intents = os.path.join(BASE_DIR, 'questions.json')
