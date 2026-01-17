@@ -1,6 +1,8 @@
 import json
 import os
-from google.cloud import dialogflow
+from google.cloud import dialogflow_v2 as dialogflow
+from dotenv import load_dotenv
+load_dotenv()
 
 BASE_DIR = os.path.dirname(__file__)
 
