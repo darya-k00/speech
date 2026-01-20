@@ -2,14 +2,19 @@ import json
 import os
 from google.cloud import dialogflow_v2 as dialogflow
 from dotenv import load_dotenv
+import argparse
 load_dotenv()
 
 BASE_DIR = os.path.dirname(__file__)
 
 project_id = os.environ['PROJECT_ID']
 
+parser = argparse.ArgumentParser(description='Укажите путь к файлу с данными')
+parser.add_argument('--path', type=str, default=os.path.join(BASE_DIR, 'questions.json'), help='Путь к файлу с данными')
+args = parser.parse_args()
+path_to_intents = args.path
+
 def get_intents():
-    path_to_intents = os.path.join(BASE_DIR, 'questions.json')
     with open(path_to_intents, 'r', encoding='utf-8') as file:
         file_content = file.read()
     return json.loads(file_content)
