@@ -3,18 +3,11 @@ from google.cloud import dialogflow_v2 as dialogflow
 import os
 from create_intent import create_intent, detect_intent_texts
 from dotenv import load_dotenv
-load_dotenv()
 
-BOT_TOKEN = os.environ['BOT_TOKEN']
-
-credential_path = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
-project_id = os.environ['PROJECT_ID']
-language_code = 'ru'
-
-session_client = dialogflow.SessionsClient()
 
 def start(update, context):
     update.message.reply_text("Привет! Я бот, созданный при поддержке DialogFlow)")
+
 
 def help_command(update, context):
     update.message.reply_text(
@@ -24,9 +17,10 @@ def help_command(update, context):
         "/help - помощь"
     )
 
-def handle_message(update, context):
+
+def handle_message(update, context, project_id):
     dialogflow_response = detect_intent_texts(
-        project_id=os.getenv('PROJECT_ID'),
+        project_id=project_id,
         session_id=update.effective_chat.id,
         user_message=update.message.text,
         language_code='ru'
@@ -34,7 +28,13 @@ def handle_message(update, context):
     text = dialogflow_response.query_result.fulfillment_text
     update.message.reply_text(text=text)
 
+
 def main():
+    load_dotenv()
+    BOT_TOKEN = os.environ['BOT_TOKEN']
+    credential_path = os.environ['GOOGLE_APPLICATION_CREDENTIALS']
+    project_id = os.environ['PROJECT_ID']
+
     updater = Updater(BOT_TOKEN)
     dispatcher = updater.dispatcher
     
@@ -44,6 +44,7 @@ def main():
     
     updater.start_polling()
     updater.idle()
+
 
 if __name__ == "__main__":
     main()

@@ -3,16 +3,9 @@ import os
 from google.cloud import dialogflow_v2 as dialogflow
 from dotenv import load_dotenv
 import argparse
-load_dotenv()
 
 BASE_DIR = os.path.dirname(__file__)
 
-project_id = os.environ['PROJECT_ID']
-
-parser = argparse.ArgumentParser(description='Укажите путь к файлу с данными')
-parser.add_argument('--path', type=str, default=os.path.join(BASE_DIR, 'questions.json'), help='Путь к файлу с данными')
-args = parser.parse_args()
-path_to_intents = args.path
 
 def get_intents():
     with open(path_to_intents, 'r', encoding='utf-8') as file:
@@ -25,6 +18,7 @@ def create_intent(project_id):
     parent = dialogflow.AgentsClient.agent_path(project_id)
 
     intents_json = get_intents()
+    responses = []
 
     for display_name, items in intents_json.items():
         training_phrases_parts = items.get('questions', [])
@@ -50,8 +44,10 @@ def create_intent(project_id):
         response = intents_client.create_intent(
             request={"parent": parent, "intent": intent}
         )
+        responses.append(response)
 
-        print("Intent created: {}".format(response))
+    return responses
+
 
 def detect_intent_texts(project_id, session_id, user_message, language_code):
     session_client = dialogflow.SessionsClient()
@@ -67,3 +63,17 @@ def detect_intent_texts(project_id, session_id, user_message, language_code):
         request={"session": session, "query_input": query_input}
     )
     return response
+
+
+if __name__ == "__main__":
+    load_dotenv()
+    parser = argparse.ArgumentParser(description='Укажите путь к файлу с данными')
+    parser.add_argument('--path', type=str, default=os.path.join(BASE_DIR, 'questions.json'), help='Путь к файлу с данными')
+    args = parser.parse_args()
+    path_to_intents = args.path
+    project_id = os.environ['PROJECT_ID']
+    intents_items = get_intents()
+
+    responses = create_intent(project_id, intents_items)
+    if responses:
+        print(f"Intent created: {responses}")
