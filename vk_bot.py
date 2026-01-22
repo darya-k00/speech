@@ -10,9 +10,10 @@ LANGUAGE_CODE = 'ru'
 
 
 def handle_message(event, vk_api, project_id):
+    vk_session_id = f"vk_{event.user_id}"
     dialogflow_response = detect_intent_texts(
         project_id=project_id,
-        session_id=event.user_id,
+        session_id=vk_session_id,
         user_message=event.text,
         language_code='ru'
         )

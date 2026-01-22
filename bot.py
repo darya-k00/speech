@@ -1,7 +1,7 @@
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 from google.cloud import dialogflow_v2 as dialogflow
 import os
-from create_intent import create_intent, detect_intent_texts
+from create_intent import detect_intent_texts
 from dotenv import load_dotenv
 
 
@@ -19,9 +19,10 @@ def help_command(update, context):
 
 
 def handle_message(update, context, project_id):
+    tg_session_id = f"tg_{update.effective_chat.id}"
     dialogflow_response = detect_intent_texts(
         project_id=project_id,
-        session_id=update.effective_chat.id,
+        session_id=tg_session_id,
         user_message=update.message.text,
         language_code='ru'
         )
